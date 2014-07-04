@@ -1,0 +1,9 @@
+<!-- $Id: iwethey-tomcat-install.xml 4 2004-04-20 19:58:10Z anderson $ -->
+
+<Context path="/@IWETHEY-APPNAME@" docBase="@TOMCAT-WEBAPPS-HOME@/@IWETHEY-WARFILE@"
+         debug="0">
+
+  <Logger className="org.apache.catalina.logger.FileLogger"
+          prefix="localhost_@IWETHEY-APPNAME@_" suffix=".log" timestamp="true"/>
+
+</Context>

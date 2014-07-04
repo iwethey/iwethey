@@ -1,0 +1,46 @@
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="IWETHEY Forums - Findbugs Targets" default="" basedir=".">
+	<property name="fblib.home"             value="${libdir.home}/findbugs"/>
+	<property name="dir.findbugs"           value="${basedir}/findbugs"/>
+	<property name="findbugs.output.fname"  value="iwethey-fb.html"/>
+	<property name="findbugs.output.file"   value="${dir.findbugs}/${findbugs.output.fname}"/>
+
+	<!-- ==================== Findbugs Targets =================================== -->
+	<path id="findbugs.lib">
+		<pathelement location="${fblib.home}/findbugs.jar" />
+	</path>
+
+	<taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpathref="findbugs.lib"/>
+
+	<target name="findbugs" depends="compile">
+		<delete dir="${dir.findbugs}" />
+		<mkdir dir="${dir.findbugs}" />
+
+		<findbugs home="${fblib.home}"
+				output="html"
+				outputFile="${findbugs.output.file}"
+				jvmargs="-server -Xss1m -Xmx800m">
+			<sourcePath path="${src.home}" />
+			<class location="${war.classes.dir}" />
+		</findbugs>
+	</target>
+
+	<target name="copy-findbugs-report-to-webserver">
+		<copy file="${findbugs.output.file}" todir="${webserver.findbugs.dir}" />
+	</target>
+</project>

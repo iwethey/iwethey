@@ -1,0 +1,51 @@
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id:$ -->
+
+<project name="IWETHEY Forums SQL - board_summary" default="tables" basedir=".">
+  <target name="create-board_summary" description="Create board summary view">
+    <pgsql message="CREATE BOARD SUMMARY VIEW">
+      CREATE VIEW board_summary (
+      	board_id,
+      	board_display_name,
+      	board_desc,
+      	board_image,
+		post_count,
+		last_updated
+      ) AS
+	  SELECT board_id, board_display_name, board_desc, board_image, sum(forum_post_count) as post_count, max(forum_last_updated) as last_updated
+	  from board, forum
+	  where board_id = forum_board_id group by board_id, board_display_name, board_desc, board_image;
+      
+      REVOKE ALL on "board_summary" from PUBLIC;
+      GRANT ALL on "board_summary" to "postgres";
+      GRANT ALL on "board_summary" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="drop-board_summary" description="Drop board summary view"  unless="drop.tables.nogo">
+    <pgsql message="DROP BOARD SUMMARY VIEW" continue="continue">
+      DROP VIEW "board_summary" CASCADE;
+    </pgsql> 
+  </target>
+
+  <target name="print-board_summary">
+    <pgsql message="PRINT BOARD SUMMARY DATA"><![CDATA[
+      SELECT * FROM board_summary where board_id < 0;
+    ]]></pgsql> 
+  </target>
+</project>

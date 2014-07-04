@@ -1,0 +1,487 @@
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="IWETHEY Forums" default="compile" basedir=".">
+	<!-- ===================== Property Definitions =========================== -->
+	<property name="app.version" value="0.2.3"/>
+
+	<property file="local.properties"/>
+	<property file="build.properties"/>
+	<property file="${user.home}/build.properties"/>
+	<property file="runtime.properties"/>
+
+	<property name="db.url" value="${db.baseurl}/${db.name}" />
+	<property name="version.moniker" value="${app.name}-${app.version}"/>
+	
+	<property name="java.source.level" value="1.5"/>
+
+
+	<!-- ==================== File and Directory Names ======================== -->
+	<property name="app.path"               value="/${app.name}"/>
+	<property name="build.home"             value="${basedir}/build"/>
+	<property name="dist.home"              value="${basedir}/dist"/>
+	<property name="dist.temp.home"         value="${basedir}/dist/${version.moniker}"/>
+	<property name="docs.home"              value="${basedir}/docs"/>
+	<property name="tomcat.manager.url"     value="${tomcat.baseurl}/manager"/>
+	<property name="src.home"               value="${basedir}/src"/>
+	<property name="web.home"               value="${basedir}/web"/>
+	<property name="conf.home"              value="${basedir}/conf"/>
+	<property name="libdir.home"            value="${basedir}/lib"/>
+	<property name="warlib.home"            value="${libdir.home}/war"/>
+	<property name="antlib.home"            value="${libdir.home}/ant"/>
+	<property name="testlib.home"           value="${libdir.home}/test"/>
+	<property name="sql.home"               value="${basedir}/sql"/>
+	<property name="test.home"              value="${basedir}/test"/>
+	<property name="war.file"               value="${dist.home}/${version.moniker}.war"/>
+
+	<property name="webinf.dir"             value="${build.home}/WEB-INF" />
+	<property name="war.classes.dir"        value="${webinf.dir}/classes" />
+
+	<property name="tar.file.nodeps"        value="${dist.home}/${version.moniker}-src-nodeps.tar"/>
+	<property name="tar.file"               value="${dist.home}/${version.moniker}-src.tar"/>
+
+	<filterset id="jdbcfilter">
+		<filter token="IWETHEY-BASEURL" value="${tomcat.baseurl}" />
+		<filter token="IWETHEY-APPNAME" value="${app.name}" />
+	</filterset>
+
+	<filterset id="installfilter">
+		<filter token="IWETHEY-APPNAME" value="${app.name}" />
+		<filter token="IWETHEY-WARFILE" value="${version.moniker}.war" />
+		<filter token="TOMCAT-WEBAPPS-HOME" value="${tomcat.webapps.home}" />
+	</filterset>
+
+
+	<!-- ================== Custom Ant Task Definitions ======================= -->
+	<!--
+	  <taskdef name="install" classname="org.apache.catalina.ant.InstallTask"/>
+	  <taskdef name="list"    classname="org.apache.catalina.ant.ListTask"/>
+	  <taskdef name="reload"  classname="org.apache.catalina.ant.ReloadTask"/>
+	  <taskdef name="remove"  classname="org.apache.catalina.ant.RemoveTask"/>
+	-->
+	<!--  <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc"/> -->
+
+
+	<!--  ==================== Compilation Control Options ==================== -->
+	<property name="compile.debug"       value="true"/>
+	<property name="compile.deprecation" value="false"/>
+	<property name="compile.optimize"    value="true"/>
+
+
+	<!-- ==================== External Dependencies =========================== -->
+	<!-- Dummy external dependency -->
+	<!--
+	  <property name="foo.jar"
+			   value="/path/to/foo.jar"/>
+	-->
+
+
+	<!-- ==================== Compilation Classpath =========================== -->
+	<path id="compile.classpath">
+		<!-- Include all elements that Tomcat exposes to applications -->
+		<pathelement location="${build.home}/WEB-INF/classes"/>
+		<pathelement location="${tomcat.home}/lib"/>
+
+		<fileset dir="${warlib.home}">
+			<include name="*.jar"/>
+		</fileset>
+
+		<fileset dir="${tomcat.home}/lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<path id="test.classpath">
+		<fileset dir="${testlib.home}/">
+			<include name="*.jar"/>
+		</fileset>
+		<fileset dir="/usr/share/java">
+			<include name="junit.jar"/>
+		</fileset>
+		<path refid="compile.classpath"/>
+	</path>
+
+
+	<!-- ==================== All Target ====================================== -->
+	<target name="all" depends="clean,tables,install" description="Clean build and dist directories, then compile"/>
+
+
+	<!-- ==================== Clean Target ==================================== -->
+	<target name="clean-dirs" description="Delete old build and dist directories">
+		<delete dir="${build.home}"/>
+		<delete dir="${dist.home}"/>
+		<delete dir="${test.home}"/>
+
+		<delete>
+			<fileset dir="${basedir}" defaultexcludes="no" includes="**/*~"/>  
+			<fileset dir="${basedir}" defaultexcludes="no" includes="**/*.log,**/*.log.1,**/*.log.2,**/*.log.3"/>  
+		</delete>
+	</target>
+
+	<target name="clean" depends="clean-dirs,clear-data" description="Delete old build and dist directories, removes test data from database">
+	</target>
+
+	<target name="clean-all" depends="clean" description="Delete old build and dist directories, removes test data from database, removes docs">
+		<delete dir="${docs.home}"/>
+	</target>
+
+
+	<!-- ==================== Prepare Target ================================== -->
+	<target name="prepare">
+		<!-- Create build directories as needed -->
+		<mkdir  dir="${build.home}"/>
+		<mkdir  dir="${build.home}/WEB-INF"/>
+		<mkdir  dir="${build.home}/WEB-INF/classes"/>
+		<mkdir  dir="${build.home}/WEB-INF/lib"/>
+
+		<!-- Copy static content of this web application -->
+		<copy todir="${build.home}" filtering="true">
+			<filterset refid="jdbcfilter"/>
+			<fileset dir="${web.home}" includes="**/*.xml,**/*.properties" />
+		</copy>
+
+		<copy todir="${build.home}/WEB-INF/classes">
+			<fileset dir="${basedir}" includes="runtime.properties" />
+		</copy>
+		<copy todir="${build.home}">
+			<fileset dir="${web.home}" excludes="**/*.xml,**/*.properties" />
+		</copy>
+
+		<copy todir="${build.home}/WEB-INF/lib">
+			<fileset dir="${warlib.home}" includes="**/*.jar"/>
+		</copy>
+
+		<!-- Copy external dependencies as required -->
+		<!-- *** CUSTOMIZE HERE AS REQUIRED BY YOUR APPLICATION *** -->
+		<mkdir  dir="${build.home}/WEB-INF/lib"/>
+		<!--
+		<copy todir="${build.home}/WEB-INF/lib" file="${foo.jar}"/>
+		-->
+
+		<!-- Copy static files from external dependencies as needed -->
+		<!-- *** CUSTOMIZE HERE AS REQUIRED BY YOUR APPLICATION *** -->
+	</target>
+
+
+	<!-- ==================== Compile Target ================================== -->
+	<target name="compile" depends="prepare" description="Compile Java sources">
+		<mkdir dir="${build.home}/WEB-INF/classes"/>
+
+		<!-- Not ready for prime time
+		<groovyc srcdir="${staging.home}"
+			destdir="${build.home}/WEB-INF/classes"
+		  listfiles="true">
+		<classpath refid="compile.classpath"/>
+		</groovyc>
+		-->
+
+		<javac srcdir="${src.home}"
+			  destdir="${build.home}/WEB-INF/classes"
+			 excludes="**/test/*.java"
+			   source="${java.source.level}"
+				debug="${compile.debug}"
+		  deprecation="${compile.deprecation}"
+			 optimize="${compile.optimize}">
+			<classpath refid="compile.classpath"/>
+		</javac>
+
+		<!-- Copy application resources -->
+		<copy  todir="${build.home}/WEB-INF/classes">
+			<fileset dir="${src.home}" excludes="**/*.java,**/*.groovy"/>
+		</copy>
+	</target>
+
+
+	<!-- ==================== Database Targets ================================== -->
+	<import file="sql/build.xml"/>
+
+
+	<!-- ==================== Dist Targets ===================================== -->
+	<target name="createwar" depends="compile" description="Build the application's .war file">
+		<mkdir  dir="${dist.home}"/>
+
+		<!-- Create application JAR file -->
+		<jar jarfile="${war.file}"
+			 basedir="${build.home}"/>
+	</target>
+
+	<target name="touch">
+		<touch>
+			<fileset dir="${src.home}"/>
+			<fileset dir="${web.home}"/>
+			<fileset dir="${conf.home}"/>
+			<fileset dir="${sql.home}"/>
+		</touch>
+	</target>
+
+	<target name="dist" depends="clean-dirs,touch,createwar,javadoc" description="Create binary and source distributions">
+		<copy todir="${dist.home}">
+			<fileset file="${conf.home}/iwethey-tomcat-install.xml"/>
+			<filterset refid="installfilter"/>
+		</copy>
+
+		<!-- Uncomment to include pre-built war in source distribution
+		<copy todir="${dist.temp.home}">
+			<fileset file="${war.file}"/>
+		</copy>
+		-->
+
+		<copy todir="${dist.temp.home}">
+			<fileset file="${basedir}/build.xml"/>
+			<fileset file="${basedir}/build.properties"/>
+			<fileset file="${basedir}/LICENSE"/>
+			<fileset file="${basedir}/README"/>
+			<fileset file="${basedir}/PREREQUISITES"/>
+			<fileset file="${basedir}/FAQ"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/src"/>
+		<copy todir="${dist.temp.home}/src">
+			<fileset dir="${src.home}"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/sql"/>
+		<copy todir="${dist.temp.home}/sql">
+			<fileset dir="${sql.home}"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/web"/>
+		<copy todir="${dist.temp.home}/web">
+			<fileset dir="${web.home}"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/docs"/>
+		<copy todir="${dist.temp.home}/docs">
+			<fileset dir="${docs.home}/api"/>
+		</copy>
+
+		<tar basedir="${dist.home}" destfile="${tar.file.nodeps}" includes="${dist.temp.home}/**/*">
+			<tarfileset dir="${dist.temp.home}" prefix="${version.moniker}"/>
+		</tar>
+		<gzip zipfile="${tar.file.nodeps}.gz" src="${tar.file.nodeps}"/>
+		<delete file="${tar.file.nodeps}"/>
+
+		<mkdir dir="${dist.temp.home}/lib/war"/>
+		<copy todir="${dist.temp.home}/lib/war">
+			<fileset dir="${warlib.home}"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/lib/ant"/>
+		<copy todir="${dist.temp.home}/lib/ant">
+			<fileset dir="${antlib.home}"/>
+		</copy>
+
+		<mkdir dir="${dist.temp.home}/lib/test"/>
+		<copy todir="${dist.temp.home}/lib/test">
+			<fileset dir="${testlib.home}"/>
+		</copy>
+
+		<tar basedir="${dist.home}" destfile="${tar.file}" includes="${dist.temp.home}/**/*">
+			<tarfileset dir="${dist.temp.home}" prefix="${version.moniker}"/>
+		</tar>
+		<gzip zipfile="${tar.file}.gz" src="${tar.file}"/>
+		<delete file="${tar.file}"/>
+
+		<delete dir="${dist.temp.home}"/>
+	</target>
+
+
+	<!-- ==================== Javadoc Target ================================== -->
+	<target name="javadoc" depends="compile" description="Create Javadoc API documentation">
+
+		<delete dir="${docs.home}"/>
+		<mkdir dir="${docs.home}/api"/>
+
+		<javadoc
+			sourcepath="${src.home}"
+		       destdir="${docs.home}/api"
+		        access="protected"
+		        Author="yes"
+		   Windowtitle="IWETHEY Class Documentation"
+		        source="${java.source.level}"
+		  classpathref="test.classpath"
+		>
+			<packageset dir="${src.home}" excludes="**/test"/>
+			<link href="http://www.junit.org/junit/javadoc/3.8.1/" />
+			<link href="http://java.sun.com/j2se/1.4.2/docs/api/" />
+			<link href="http://www.springframework.org/docs/api/" />
+		</javadoc>
+
+	</target>
+
+	<target name="javadoc-all" depends="compile" description="Create Javadoc API documentation, including test and private">
+
+		<delete dir="${docs.home}"/>
+		<mkdir dir="${docs.home}/api"/>
+		<javadoc
+			sourcepath="${src.home}"
+		       destdir="${docs.home}/api"
+		        access="private"
+		        Author="yes"
+		   Windowtitle="IWETHEY Class Documentation"
+		        source="${java.source.level}"
+		  classpathref="test.classpath"
+		>
+			<packageset dir="${src.home}"/>
+			<link href="http://www.junit.org/junit/javadoc/3.8.1/" />
+			<link href="http://java.sun.com/j2se/1.4.2/docs/api/" />
+			<link href="http://www.springframework.org/docs/api/" />
+		</javadoc>
+	</target>
+
+
+	<!-- ==================== Install Target ================================== -->
+	<target name="test-war">
+		<record name="list-wars.tmp" action="start" append="no" emacsmode="true"/>
+		<antcall target="list-wars"/>
+		<record name="list-wars.tmp" action="stop" append="no" emacsmode="true"/>
+
+		<loadfile srcFile="list-wars.tmp" property="war.list"/>
+		<delete file="list-wars.tmp"/>
+
+		<condition property="war.exists">
+			<contains string="${war.list}" substring="${app.path}:" />
+		</condition>
+		<condition property="war.does.not.exist"><isfalse value="${war.exists}"/></condition>
+	</target>
+
+	<target name="install" depends="createwar,remove" description="Install application to servlet container">
+		<install url="${tomcat.manager.url}"
+			username="${tomcat.manager.username}"
+			password="${tomcat.manager.password}"
+				path="${app.path}"
+				 war="file://${war.file}"/>
+	</target>
+
+
+	<!-- ====================== List-Wars Target =================================== -->
+	<target name="list-wars" description="List installed applications on servlet container">
+		<list    url="${tomcat.manager.url}"
+			username="${tomcat.manager.username}"
+			password="${tomcat.manager.password}"/>
+	</target>
+
+
+	<!-- ==================== Reload Target =================================== -->
+	<target name="reload" depends="compile,remove,install" description="Reload application on servlet container"/>
+
+
+	<!-- ==================== Remove Target =================================== -->
+	<target name="remove" depends="test-war" if="war.exists" description="Remove application on servlet container">
+		<remove url="${tomcat.manager.url}"
+		   username="${tomcat.manager.username}"
+		   password="${tomcat.manager.password}"
+			   path="${app.path}"/>
+	</target>
+
+
+	<!-- ==================== Conversion Targets ================================== -->
+	<import file="build-conversions.xml"/>
+
+
+	<!-- ==================== PMD Targets ================================== -->
+	<import file="build-pmd.xml"/>
+
+
+	<!-- ==================== Findbugs Targets =================================== -->
+	<import file="build-findbugs.xml"/>
+
+
+	<target name="compiletests" depends="prepare,compile" description="Compile Java tests">
+		<!-- Compile Java classes as necessary -->
+		<mkdir dir="${test.home}"/>
+
+		<javac  srcdir="${src.home}"
+		      includes="**/test/*.java"
+			   destdir="${test.home}"
+				 debug="${compile.debug}"
+		   deprecation="${compile.deprecation}"
+			  optimize="${compile.optimize}">
+			<classpath refid="test.classpath"/>
+		</javac>
+
+		<copy todir="${test.home}">
+			<fileset dir="${src.home}" includes="**/*.properties"/>
+		</copy>
+
+		<copy todir="${test.home}">
+			<filterset refid="jdbcfilter"/>
+			<fileset dir="${src.home}" includes="**/test-context.xml"/>
+		</copy>
+	</target>
+
+	<target name="test" depends="testlocal,testweb" description="Run all JUnit tests"/>
+
+	<target name="testlocal" depends="compiletests,load-data" description="Run local JUnit tests">
+		<junit printsummary="on"
+			   fork="false"
+			   haltonfailure="false"
+			   failureproperty="tests.failed"
+			   showoutput="true">
+			<classpath>
+				<path location="${test.home}"/>
+				<path refid="test.classpath"/>
+			</classpath>
+			<formatter type="brief" usefile="false"/>
+
+			<batchtest>
+				<fileset dir="${test.home}">
+					<include name="**/*Test.*"/>
+					<!--
+					<include name="**/HibPostManagerTest.*"/>
+					-->
+					<exclude name="**/Web*Test.*"/>
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<fail if="tests.failed">
+			***********************************************************
+			***********************************************************
+			****  One or more tests failed!  Check the output ...  ****
+			***********************************************************
+			***********************************************************
+		</fail>
+	</target>
+
+	<target name="testweb" depends="compiletests,install,load-data" description="Run web JUnit tests">
+		<junit printsummary="on"
+			   fork="false"
+			   haltonfailure="false"
+			   failureproperty="tests.failed"
+			   showoutput="false">
+			<classpath>
+				<path location="${test.home}"/>
+				<path refid="test.classpath"/>
+			</classpath>
+			<formatter type="brief" usefile="false"/>
+
+			<batchtest>
+				<fileset dir="${test.home}">
+					<include name="**/Web*Test.*"/>
+				</fileset>
+			</batchtest>
+		</junit>
+
+		<fail if="tests.failed">
+			***********************************************************
+			***********************************************************
+			****  One or more tests failed!  Check the output ...  ****
+			***********************************************************
+			***********************************************************
+		</fail>
+	</target>
+</project>

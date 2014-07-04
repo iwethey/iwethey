@@ -1,0 +1,50 @@
+REQUIREMENTS
+
+Q. What versions of 3rd party software are required?
+A. J2SDK 1.4.1 or higher, Tomcat 4.1 or higher, and PostgreSQL 7.4.2 or higher.
+
+
+BUILDING
+
+Q. The build script prompts me for the PostgreSQL password.
+A. Set the PGPASSWORD environment variable before running Ant.
+
+Q. The build script fails with:
+	java.io.FileNotFoundException: http://host:port/manager/list
+A. Install the Tomcat administrative application.
+
+Q. The build script prints the following warning:
+	-tsearch-warn: [echo] ERROR: Unable to find tsearch2.sql at
+		/usr/share/postgresql/contrib/tsearch2.sql!
+A. Install the PostgreSQL contrib applications.
+
+
+OPERATION
+
+Q. When accessing the web application, I get the following error:
+	java.lang.NoClassDefFoundError
+	   at net.sf.hibernate.cfg.Configuration.<init>(Configuration.java:86)
+A. Modify your catalina.policy file as described in the README, and make sure
+   to restart Tomcat after making the changes.
+
+Q. I changed my catalina.policy file as shown, but I still get the error.
+A. Debian keeps its policy information for Tomcat in /etc/tomcat4/policy.d,
+   and it overwrites the actual catalina.policy file every time Tomcat is
+   restarted. Put the changes in /etc/tomcat4/policy.d/04webapps.policy.
+
+Q. I changed my catalina.policy file as shown, but I *STILL* get the error.
+A. Make sure the added settings are at the beginning of the grant{} section.
+
+Q. When accessing the web application, I get the following error:
+	A connection error has occurred: org.postgresql.util.PSQLException:
+	FATAL: Password authentication failed for user "<someuser>"
+A. Make sure your PostgreSQL installation allows remote connections. In the
+   pg_hba.conf file, try something like this:
+	local   all         all                                          trust
+	host    all         all         127.0.0.1      255.255.255.255   trust
+	host    all         all         0.0.0.0        0.0.0.0           reject
+   Make sure there are no other active lines, and remember to restart PostgreSQL
+   after your changes. If this fixes the problem, then you have a PostgreSQL
+   authentication configuration problem, which is beyond the scope of this
+   document to discuss.
+

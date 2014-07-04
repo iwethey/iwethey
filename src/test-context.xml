@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	  http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: test-context.xml 55 2004-12-07 21:53:42Z anderson $ -->
+
+
+<beans>
+	<!-- data managers -->
+
+	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location"><value>classpath:runtime.properties</value></property>
+	</bean>
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+	  <property name="driverClassName"><value>${db.driver}</value></property>
+	  <property name="url"><value>jdbc:postgresql://${db.host}:${db.port}/${db.name}</value></property>
+	  <property name="username"><value>${db.iwethey.user}</value></property>
+	  <property name="password"><value>${db.iwethey.password}</value></property>
+	</bean>
+
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean" autowire="byName">
+		<property name="mappingResources">
+			<value>org/iwethey/forums/db/iwethey.hbm.xml</value>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.jdbc.batch_size">0</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager" autowire="byName"/>
+
+	<bean id="adminManager" class="org.iwethey.forums.db.JdbcAdminManager" autowire="byName" />
+	<bean id="userManager" class="org.iwethey.forums.db.HibUserManager" autowire="byName" />
+	<bean id="boardManager" class="org.iwethey.forums.db.HibBoardManager" autowire="byName" />
+	<bean id="categoryManager" class="org.iwethey.forums.db.HibCategoryManager" autowire="byName" />
+	<bean id="forumManager" class="org.iwethey.forums.db.HibForumManager" autowire="byName" />
+	<bean id="postManager" class="org.iwethey.forums.db.HibPostManager" autowire="byName" />
+
+</beans>

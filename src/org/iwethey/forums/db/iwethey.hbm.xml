@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping auto-import="true">
+
+	<class name="org.iwethey.forums.domain.User" table="iwethey_user" lazy="true">
+		<cache usage="read-write"/>
+
+		<id name="id" column="user_id" unsaved-value="0">
+			<generator class="sequence">
+				<param name="sequence">seq_user</param>
+			</generator>
+		</id>
+	
+		<property name="nickname"/>
+		<property name="encryptedPassword" column="password"/>
+		<property name="created" type="timestamp" insert="false"/> <!-- update="false"/> -->
+		<property name="lastPresent" column="last_present" type="timestamp" insert="false"/>
+		<property name="admin" column="admin" type="boolean" />
+
+		<map name="properties" table="user_property" cascade="all" lazy="true">
+			<cache usage="read-write"/>
+			<key column="user_id"/>
+			<index column="name" type="string"/>
+			<element column="value" type="string"/>
+		</map>
+
+		<map name="forumRead" table="read" cascade="all" lazy="true">
+			<cache usage="read-write"/>
+			<key column="read_user_id"/>
+			<index column="read_forum_id" type="int"/>
+			<element column="read_mark" type="timestamp"/>
+		</map>
+	</class>
+
+	<class name="org.iwethey.forums.domain.Board" table="board" lazy="true">
+		<cache usage="read-write"/>
+
+		<id name="id" column="board_id" unsaved-value="0">
+			<generator class="sequence">
+				<param name="sequence">seq_board</param>
+			</generator>
+		</id>
+	
+		<property name="displayName" column="board_display_name" />
+		<property name="description" column="board_desc" />
+		<property name="image" column="board_image"/>
+		<many-to-one name="createdBy" column="board_created_by"/>
+
+		<property name="created" column="board_created" type="timestamp" insert="false"/> <!--  update="false"/> -->
+
+		<set name="categories" inverse="true" order-by="category_order" lazy="true">
+			<cache usage="read-write"/>
+			<key column="category_board_id"/>
+			<one-to-many class="org.iwethey.forums.domain.Category"/>
+		</set>
+	</class>
+
+	<class name="org.iwethey.forums.domain.BoardSummary" table="board_summary" lazy="true">
+		<cache usage="read-write"/>
+
+		<id name="id" column="board_id" unsaved-value="0">
+			<generator class="assigned" />
+		</id>
+
+		<property name="displayName" column="board_display_name" />
+		<property name="description" column="board_desc" />
+		<property name="image" column="board_image"/>
+		<property name="postCount" column="post_count" />
+		<property name="lastUpdated" column="last_updated" type="timestamp" insert="false"/>
+	</class>
+
+	<class name="org.iwethey.forums.domain.Category" table="category" lazy="true">
+		<cache usage="read-write"/>
+
+		<id name="id" column="category_id" unsaved-value="0">
+			<generator class="sequence">
+				<param name="sequence">seq_category</param>
+			</generator>
+		</id>
+
+		<many-to-one name="board" column="category_board_id"/>
+	
+		<property name="order" column="category_order" />
+		<property name="displayName" column="category_display_name" />
+		<many-to-one name="createdBy" column="category_created_by"/>
+		<property name="created" column="category_created" type="timestamp" insert="false"/> <!-- update="false"/> -->
+
+		<set name="forums" inverse="true" order-by="forum_order" lazy="true">
+			<cache usage="read-write"/>
+			<key column="forum_category_id"/>
+			<one-to-many class="org.iwethey.forums.domain.Forum"/>
+		</set>
+	</class>
+
+	<class name="org.iwethey.forums.domain.Forum" table="forum" lazy="true">
+<!--
+		<cache usage="read-write"/>
+-->
+
+		<id name="id" column="forum_id" unsaved-value="0">
+			<generator class="sequence">
+				<param name="sequence">seq_forum</param>
+			</generator>
+		</id>
+
+		<many-to-one name="board" column="forum_board_id"/>
+		<many-to-one name="category" column="forum_category_id"/>
+	
+		<property name="order" column="forum_order" />
+		<property name="postCount" column="forum_post_count" insert="false"/>
+		<property name="threadCount" column="forum_thread_count" insert="false"/>
+		<property name="lastUpdated" column="forum_last_updated" type="timestamp" insert="false"/>
+		<property name="displayName" column="forum_display_name" />
+		<property name="headerImage" column="forum_image" />
+		<property name="description" column="forum_desc" />
+		<many-to-one name="createdBy" column="forum_created_by"/>
+		<property name="created" column="forum_created" type="timestamp" insert="false" update="false"/>
+
+	</class>
+
+	<class name="org.iwethey.forums.domain.Post" table="post" lazy="true">
+<!--
+		<cache usage="read-write"/>
+-->
+
+		<id name="id" column="post_id" unsaved-value="0">
+			<generator class="sequence"><param name="sequence">seq_post</param></generator>
+		</id>
+
+		<many-to-one name="forum" column="post_forum_id"/>
+	
+		<property name="leftId" column="post_left_id" insert="false" update="false" />
+		<property name="rightId" column="post_right_id" insert="false" update="false" />
+		<property name="level" column="post_level" insert="false" update="false" />
+		<property name="replyCount" formula="((post_right_id - post_left_id) - 1) / 2"/>
+
+		<many-to-one name="parent" column="post_parent_id" class="org.iwethey.forums.domain.Post"/>
+		<many-to-one name="thread" column="post_thread_id" class="org.iwethey.forums.domain.Post"/>
+
+		<property name="subject" column="post_subject" />
+		<property name="content" column="post_content" />
+		<property name="originalContent" column="post_content_orig" />
+		<property name="signature" column="post_signature" />
+		<property name="originalSignature" column="post_signature_orig" />
+
+		<property name="locked" column="post_locked" />
+		<property name="convertNewlines" column="post_convert_newlines" />
+		<property name="convertLinks" column="post_convert_links" />
+		<property name="convertCodes" column="post_convert_codes" />
+		<property name="convertHtml" column="post_convert_html" />
+
+		<many-to-one name="createdBy" column="post_created_by"/>
+		<property name="created" column="post_created" type="timestamp" insert="false" update="false"/>
+		<property name="lastUpdated" column="post_last_updated" type="timestamp" insert="false"/>
+		<property name="childrenLastUpdated" column="post_child_last_updated" type="timestamp" insert="false"/>
+
+		<list name="editHistory" table="post_history" cascade="all">
+			<cache usage="read-write"/>
+			<key column="post_history_parent_id"/>
+			<index column="post_history_order"/>
+			<composite-element class="org.iwethey.forums.domain.PostHistory">
+				<parent name="parent"/>
+				<property name="subject" column="post_history_subject" />
+				<property name="content" column="post_history_content" />
+				<property name="signature" column="post_history_signature" />
+				<many-to-one name="createdBy" column="post_history_created_by"/>
+				<property name="created" column="post_history_created" type="timestamp"/>
+			</composite-element>
+		</list>
+
+	</class>
+
+<!--
+	<class name="org.iwethey.forums.domain.PostHistory" table="post_history" lazy="false">
+		<cache usage="read-write"/>
+
+		<id name="id" column="post_history_id" unsaved-value="0">
+			<generator class="sequence"><param name="sequence">seq_post_history</param></generator>
+		</id>
+
+		<many-to-one name="parent" column="post_history_parent_id" class="org.iwethey.forums.domain.Post"/>
+
+		<property name="order" column="post_history_order" />
+	
+		<property name="subject" column="post_history_subject" />
+		<property name="content" column="post_history_content" />
+		<property name="signature" column="post_history_signature" />
+
+		<many-to-one name="createdBy" column="post_history_created_by"/>
+		<property name="created" column="post_history_created" type="timestamp" insert="false" update="false"/>
+	</class>
+-->
+
+	<class name="org.iwethey.forums.domain.Quote" table="quote" lazy="true">
+		<cache usage="read-write"/>
+
+		<id name="id" column="id" unsaved-value="0">
+			<generator class="sequence"><param name="sequence">seq_quote</param></generator>
+		</id>
+
+		<many-to-one name="board" column="board_id"/>
+
+		<property name="quote" column="quote" />
+		<property name="approved" column="approved" />
+		<many-to-one name="approvedBy" column="approved_by" />
+		<property name="approvedDate" column="approved_date" type="timestamp" />
+
+		<many-to-one name="createdBy" column="created_by"/>
+		<property name="created" column="created" type="timestamp" />
+	</class>
+
+	<class name="org.iwethey.forums.domain.OldQuote" table="old_quote" lazy="true">
+		<composite-id>
+			<key-many-to-one name="board" column="board_id" />
+			<key-property name="quote" column="quote" />
+			<key-property name="createdBy" column="created_by"  />
+			<key-property name="created" column="created" type="timestamp" />
+		</composite-id>
+	</class>
+
+	<query name="org.iwethey.threads"><![CDATA[
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+		  order by post.id DESC
+	]]></query>
+
+
+	<query name="org.iwethey.new.threads"><![CDATA[
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+		  and ( post.childrenLastUpdated > :mark or post.lastUpdated > :mark )
+		  order by post.id DESC
+	]]></query>
+
+<!-- I have no idea what the hell I thought this was accomplishing.
+		  and (  ( post.childrenLastUpdated > :mark and post.childrenLastUpdated <= :lastUpdated)
+		      or ( post.lastUpdated > :mark and post.lastUpdated <= :lastUpdated )
+		      )
+-->
+
+	<query name="org.iwethey.threads.count"><![CDATA[
+	       select count(*)
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+	]]></query>
+
+
+	<query name="org.iwethey.new.threads.count"><![CDATA[
+	       select count(*)
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+		  and ( post.childrenLastUpdated > :mark or post.lastUpdated > :mark )
+	]]></query>
+
+<!-- I have no idea what the hell I thought this was accomplishing.
+		  and (  ( post.childrenLastUpdated > :mark and post.childrenLastUpdated <= :lastUpdated)
+		      or ( post.lastUpdated > :mark and post.lastUpdated <= :lastUpdated )
+		      )
+-->
+
+	<query name="org.iwethey.threads.by.updated"><![CDATA[
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+		  order by post.childrenLastUpdated DESC, post.id DESC
+	]]></query>
+
+
+	<query name="org.iwethey.new.threads.by.updated"><![CDATA[
+		 from org.iwethey.forums.domain.Post as post
+		where post.forum = :forum
+		  and post.thread.id = post.id
+		  and ( post.childrenLastUpdated > :mark or post.lastUpdated > :mark )
+		  order by post.childrenLastUpdated DESC, post.id DESC
+	]]></query>
+<!-- I have no idea what the hell I thought this was accomplishing.
+		  and (  ( post.childrenLastUpdated > :mark and post.childrenLastUpdated <= :lastUpdated)
+		      or ( post.lastUpdated > :mark and post.lastUpdated <= :lastUpdated )
+		      )
+-->
+
+</hibernate-mapping>

@@ -1,0 +1,14 @@
+Tomcat 4+, with administrative applications installed
+PostgreSQL 7.4.2+ with contribs installed
+JDK 1.4.1+
+
+For Debian users:
+
+1) apt-get install tomcat4 tomcat4-admin postgresql postgresql-contrib
+
+2) One of the following:
+	a) 'apt-get install j2sdk1.4' to use Blackdown's Java, or
+	b) 'apt-get install java-package', download the 1.4.2 JDK from Sun's
+	   web site, and run make-jpkg on the .bin file you downloaded. This
+	   gives you a file named 'sun-j2sdk1.4.deb'. Do 'apt-get install
+	   sun-j2sdk1.4debian', then 'dpkg -i sun-j2sdk1.4.deb'.

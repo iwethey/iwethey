@@ -1,0 +1,103 @@
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: build-forum.xml 25 2004-06-20 17:47:32Z anderson $ -->
+
+
+<project name="IWETHEY Forums SQL - forum" default="tables" basedir=".">
+  <!-- FORUM -->
+
+  <target name="create-seq_forum" description="Create forum sequence">
+    <pgsql message="CREATE FORUM SEQUENCE" continue="continue">
+      CREATE SEQUENCE "seq_forum" start 1 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+      GRANT ALL on "seq_forum" to "postgres";
+      GRANT ALL on "seq_forum" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="create-forum" depends="create-seq_forum" description="Create forum table">
+    <pgsql message="CREATE FORUM TABLE">
+      CREATE TABLE "forum" (
+      	"forum_id" int NOT NULL DEFAULT nextval('seq_forum') PRIMARY KEY,
+      	"forum_board_id" int NOT NULL REFERENCES board (board_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      	"forum_category_id" int NOT NULL REFERENCES category (category_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      	"forum_order" int NOT NULL,
+      	"forum_post_count" int NOT NULL DEFAULT 0,
+      	"forum_thread_count" int NOT NULL DEFAULT 0,
+      	"forum_last_updated" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      	"forum_display_name" text NOT NULL,
+      	"forum_desc" text NOT NULL,
+      	"forum_created_by" int NOT NULL REFERENCES iwethey_user (user_id) ON UPDATE CASCADE,
+      	"forum_created" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+      ) WITHOUT OIDS;
+      
+      CREATE INDEX idxforum ON forum USING btree (forum_id);
+      
+      REVOKE ALL on "forum" from PUBLIC;
+      GRANT ALL on "forum" to "postgres";
+      GRANT ALL on "forum" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="drop-forum" description="Drop forum table"  unless="drop.tables.nogo">
+    <pgsql message="DROP FORUM TABLE" continue="continue">
+      DROP TABLE "forum" CASCADE;
+    </pgsql> 
+  </target>
+
+  <target name="load-forum">
+    <pgsql message="LOAD FORUM DATA">
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by, forum_last_updated)
+       values(-1, -1, -1, 1, 100, 'Tines', 'Tines: long or short?', -1, CURRENT_TIMESTAMP - interval '5 minutes');
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by, forum_last_updated)
+       values(-2, -1, -1, 2, 1000, 'Chatter', 'Sporkly Gossip', -1, CURRENT_TIMESTAMP - interval '5 minutes');
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by, forum_last_updated)
+       values(-3, -1, -2, 1, 100, 'History', 'Sporks through the ages', -2, CURRENT_TIMESTAMP - interval '6 minutes');
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by, forum_last_updated)
+       values(-4, -1, -2, 2, 1000, 'Boston', 'Special sporks from Bean Town', -2, CURRENT_TIMESTAMP);
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by)
+       values(-5, -2, -3, 1, 100, 'Bowls', 'Blancmange bowls: wide or narrow?', -3);
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by)
+       values(-6, -2, -3, 2, 2000, 'Chatter', 'Blancmange Gossip', -3);
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by)
+       values(-7, -2, -4, 1, 100, 'History', 'Blancmange through the ages', -3);
+
+      INSERT INTO forum (forum_id, forum_board_id, forum_category_id, forum_order, forum_post_count, forum_display_name, forum_desc, forum_created_by)
+       values(-8, -2, -4, 2, 2000, 'Chicago', 'Special blancmange from the Windy City', -2);
+
+    </pgsql> 
+  </target>
+
+  <target name="print-forum">
+    <pgsql message="PRINT FORUM DATA"><![CDATA[
+      SELECT * FROM forum where forum_id < 0;
+    ]]></pgsql> 
+  </target>
+
+  <target name="clear-forum" depends="database-existence-check" if="database.exists">
+    <pgsql message="CLEAR FORUM DATA"><![CDATA[
+      DELETE FROM forum where forum_id < 0 or forum_category_id < 0 or forum_board_id < 0;
+    ]]></pgsql> 
+  </target>
+
+
+</project>

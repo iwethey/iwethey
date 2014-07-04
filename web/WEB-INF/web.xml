@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+        version="2.4">
+
+
+  <display-name>IWETHEY</display-name>
+  <description>
+    All Your Posts Are Belong To Us
+  </description>
+
+  <servlet>
+    <servlet-name>iwethey</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>iwethey</servlet-name>
+    <url-pattern>*.iwt</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>iwethey</servlet-name>
+    <url-pattern>*.json</url-pattern>
+  </servlet-mapping>
+
+  <session-config>
+    <session-timeout>1440</session-timeout> 
+  </session-config>
+
+  <welcome-file-list>
+    <welcome-file>
+      index.jsp
+    </welcome-file>
+  </welcome-file-list>
+
+  <taglib>
+    <taglib-uri>http://www.iwethey.org/tags</taglib-uri>
+    <taglib-location>/WEB-INF/iwethey.tld</taglib-location>
+  </taglib>
+</web-app>

@@ -1,0 +1,224 @@
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="IWETHEY Forums - PMD targets" default="pmd" basedir=".">
+	<property name="pmdlib.home"            value="${libdir.home}/pmd"/>
+	<property name="dir.pmd"                value="${basedir}/pmd"/>
+
+	<path id="pmd.classpath">
+		<fileset dir="${pmdlib.home}">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+
+	<taskdef name="pmd" classname="net.sourceforge.pmd.ant.PMDTask" classpathref="pmd.classpath"/>
+
+	<!--<target name="pmd" depends="pmd-dir,pmd-basic,pmd-braces,pmd-clone,pmd-codesize,pmd-controversial,pmd-coupling,pmd-design,pmd-favorites,pmd-finalizers,pmd-imports,pmd-junit,pmd-logging,pmd-naming,pmd-newrules,pmd-scratchpad,pmd-strictexception,pmd-strings,pmd-unusedcode"/>-->
+	<target name="pmd" depends="pmd-dir,pmd-basic,pmd-braces,pmd-clone,pmd-codesize,pmd-controversial,pmd-coupling,pmd-design,pmd-favorites,pmd-finalizers,pmd-imports,pmd-junit,pmd-logging,pmd-naming,pmd-scratchpad,pmd-strictexception,pmd-strings,pmd-unusedcode"/>
+
+	<target name="pmd-dir">
+		<delete dir="${dir.pmd}"/>
+		<mkdir dir="${dir.pmd}"/>
+	</target>
+
+	<target name="copy-pmd-report-to-webserver">
+		<copy todir="${webserver.pmd.dir}">
+			<fileset dir="${dir.pmd}" />
+		</copy>
+	</target>
+
+	<target name="pmd-basic">
+		<pmd rulesetfiles="rulesets/basic.xml">
+			<formatter type="html" toFile="${dir.pmd}/basic.html"/>
+			<fileset dir="${src.home}">
+				<include name="**/*.java"/>
+				<exclude name="**/test/*.java"/>
+			</fileset>
+		</pmd>
+	</target>
+
+  <target name="pmd-braces">
+    <pmd rulesetfiles="rulesets/braces.xml">
+        <formatter type="html" toFile="${dir.pmd}/braces.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-clone">
+    <pmd rulesetfiles="rulesets/clone.xml">
+        <formatter type="html" toFile="${dir.pmd}/clone.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-codesize">
+    <pmd rulesetfiles="rulesets/codesize.xml">
+        <formatter type="html" toFile="${dir.pmd}/codesize.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-controversial">
+    <pmd rulesetfiles="rulesets/controversial.xml">
+        <formatter type="html" toFile="${dir.pmd}/controversial.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-coupling">
+    <pmd rulesetfiles="rulesets/coupling.xml">
+        <formatter type="html" toFile="${dir.pmd}/coupling.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-design">
+    <pmd rulesetfiles="rulesets/design.xml">
+        <formatter type="html" toFile="${dir.pmd}/design.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-favorites">
+    <pmd rulesetfiles="rulesets/favorites.xml">
+        <formatter type="html" toFile="${dir.pmd}/favorites.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-finalizers">
+    <pmd rulesetfiles="rulesets/finalizers.xml">
+        <formatter type="html" toFile="${dir.pmd}/finalizers.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-imports">
+    <pmd rulesetfiles="rulesets/imports.xml">
+        <formatter type="html" toFile="${dir.pmd}/imports.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-junit">
+    <pmd rulesetfiles="rulesets/junit.xml">
+        <formatter type="html" toFile="${dir.pmd}/junit.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-logging">
+    <pmd rulesetfiles="rulesets/logging-java.xml">
+        <formatter type="html" toFile="${dir.pmd}/logging.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-naming">
+    <pmd rulesetfiles="rulesets/naming.xml">
+        <formatter type="html" toFile="${dir.pmd}/naming.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <!--
+  <target name="pmd-newrules">
+	<pmd rulesetfiles="rulesets/newrules.xml">
+        <formatter type="html" toFile="${dir.pmd}/newrules.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+  -->
+
+  <target name="pmd-scratchpad">
+    <pmd rulesetfiles="rulesets/scratchpad.xml">
+        <formatter type="html" toFile="${dir.pmd}/scratchpad.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-strictexception">
+    <pmd rulesetfiles="rulesets/strictexception.xml">
+        <formatter type="html" toFile="${dir.pmd}/strictexception.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-strings">
+    <pmd rulesetfiles="rulesets/strings.xml">
+        <formatter type="html" toFile="${dir.pmd}/strings.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+
+  <target name="pmd-unusedcode">
+    <pmd rulesetfiles="rulesets/unusedcode.xml">
+        <formatter type="html" toFile="${dir.pmd}/unusedcode.html"/>
+        <fileset dir="${src.home}">
+            <include name="**/*.java"/>
+            <exclude name="**/test/*.java"/>
+        </fileset>
+    </pmd>
+  </target>
+</project>

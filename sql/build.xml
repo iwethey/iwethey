@@ -1,0 +1,230 @@
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="IWETHEY Forums SQL" default="tables" basedir=".">
+
+  <property file="../build.properties"/>
+  <property name="db.url" value="${db.baseurl}/${db.name}" />
+
+  <path id="database.class.path">
+    <fileset dir="${warlib.home}">
+        <include name="*.jar"/>
+    </fileset>
+  </path>
+
+  <target name="drop-tables"
+   depends="drop-tables-check,drop-board_summary,drop-post,drop-read,drop-forum,drop-category,drop-board,drop-user_property,drop-iwethey_user,drop-quote"
+   description="Drops all tables from the database" />
+
+  <target name="database"
+   depends="create-user,create-database"
+   description="Create database, user, and languages" />
+
+  <target name="tables"
+   depends="database,create-iwethey_user,create-user_property,create-quote,create-board,create-category,create-forum,create-read,create-post,create-board_summary"
+   description="Compile database table ddl to create the tables in the database" />
+
+  <target name="tables-with-drop"
+   depends="database,drop-tables,tables"
+   description="Compile database table ddl to create the tables in the database, dropping the tables first" />
+
+  <target name="load-data"
+   depends="clear-data,load-iwethey_user,load-user_property,load-quote,load-board,load-category,load-forum,load-read,load-post,print-data"
+   description="Load test data" />
+
+  <target name="print-data"
+   depends="print-iwethey_user,print-user_property,print-quote,print-board,print-category,print-forum,print-read,print-post,print-board_summary"
+   description="Print test data" />
+
+  <target name="clear-data"
+   depends="clear-category,clear-board,clear-user_property,clear-quote,clear-iwethey_user,clear-forum,clear-read,clear-post"
+   description="Remove test data" />
+
+
+  <!--  DATABASE, USER, AND LANGUAGE MANAGEMENT -->
+
+  <target name="retrieve-tables" description="List the tables in the database">
+    <exec executable="psql" outputproperty="table.list">
+      <arg line="-d ${db.name} -U ${db.user} -c \d"/>
+      <env key="PGPASSWORD" value="${db.pw}"/>
+    </exec>
+  </target>
+
+  <target name="database-existence-check" depends="retrieve-tables"
+          description="Check to see if the database exists">
+    <echo>${table.list}</echo>
+
+    <condition property="database.does.not.exist">
+      <and>
+        <contains string="${table.list}" substring="FATAL:" />
+        <contains string="${table.list}" substring="does not exist" />
+      </and>
+    </condition>
+
+    <condition property="database.exists"><isfalse value="${database.does.not.exist}"/></condition>
+
+    <condition property="database.auth.bad">
+      <contains string="${table.list}" substring="psql: FATAL:  IDENT authentication failed for user" />
+    </condition>
+
+    <condition property="database.auth.good"><isfalse value="${database.auth.bad}"/></condition>
+
+    <antcall target="-auth-warn"/>
+  </target>
+
+  <target name="-auth-warn" unless="database.auth.good">
+    <echo>ERROR: Your database authentication is not set up properly, and none of the database initialization routines will work!</echo>
+  </target>
+
+  <target name="drop-database-check" description="Drop database and user">
+    <input
+       message="THIS WILL DELETE ALL TABLES AND DATA!! ARE YOU SURE? (y/N) "
+       validargs="n,N,y,Y"
+       addproperty="drop.answer"
+       defaultvalue="n"
+       />
+
+    <condition property="drop.db.go">
+      <equals arg1="${drop.answer}" arg2="y" casesensitive="false"/>
+    </condition>
+  </target>
+
+  <target name="-drop-database-nogo" unless="drop.db.go">
+    <echo>NOT dropping database.</echo>
+  </target>
+
+  <target
+      name="drop-database" depends="drop-database-check,-drop-database-nogo"
+      description="Drop database and user" if="drop.db.go">
+
+<!--
+    <echo>REMOVING WEB APPLICATION</echo>
+    <antcall target="remove"/>
+-->
+
+    <echo>DROPPING DATABASE ${db.name}</echo>
+    <exec executable="dropdb">
+      <arg line="-U ${db.user} ${db.name}"/>
+      <env key="PGPASSWORD" value="${db.pw}"/>
+    </exec>
+
+<!--
+    <echo>DROPPING USER ${db.iwethey.user}</echo>
+    <exec executable="dropuser">
+      <arg line="-U ${db.user} ${db.iwethey.user}"/>
+      <env key="PGPASSWORD" value="${db.pw}"/>
+    </exec>
+-->
+  </target>
+
+  <target name="create-user"
+   depends="database-existence-check" if="database.does.not.exist"
+   description="Create database user/owner">
+    <echo message="CREATE USER ${db.iwethey.user} USING: ${db.driver} ${db.url}"/>
+    <exec executable="createuser">
+      <arg line="-a -d -e -U ${db.user} ${db.iwethey.user}"/>
+      <env key="PGPASSWORD" value="${db.pw}"/>
+    </exec>
+  </target>
+
+  <target name="create-database"
+   depends="database-existence-check" if="database.does.not.exist"
+   description="Create database">
+    <echo message="CREATE DATABASE USING: ${db.driver} ${db.url}"/>
+    <exec executable="createdb">
+      <arg line="-U ${db.user} -O ${db.iwethey.user} ${db.name}"/>
+      <arg value="IWETHEY Forums"/>
+      <env key="PGPASSWORD" value="${db.pw}"/>
+    </exec>
+  </target>
+
+  <macrodef name="pgsql">
+    <attribute name="message"/>
+    <attribute name="continue" default="abort"/>
+    <attribute name="print" default="true"/>
+    <text name="sql" />
+    <sequential>
+      <echo message="@{message} USING: ${db.driver} ${db.url}"/>
+      <sql driver="${db.driver}" url="${db.url}"
+           userid="${db.user}" password="${db.pw}"
+	   autocommit="true"
+           onerror="@{continue}" print="@{print}">
+
+        <classpath refid="database.class.path"/>
+        @{sql}
+      </sql> 
+    </sequential>
+  </macrodef>
+
+  <macrodef name="pgplsql">
+    <attribute name="message"/>
+    <attribute name="continue" default="abort"/>
+    <attribute name="print" default="true"/>
+    <text name="sql" />
+    <sequential>
+      <echo message="@{message} USING: ${db.driver} ${db.url}"/>
+      <sql driver="${db.driver}" url="${db.url}"
+           userid="${db.user}" password="${db.pw}"
+           onerror="@{continue}" print="@{print}"
+	   keepformat="true" escapeprocessing="true" delimitertype="row">
+
+        <classpath refid="database.class.path"/>
+        @{sql}
+      </sql> 
+    </sequential>
+  </macrodef>
+
+  <target name="create-language"
+   depends="database-existence-check" if="database.does.not.exist"
+   description="Create plpgsql language">
+    <pgsql message="CREATE PLPGSQL LANGUAGE">
+      CREATE FUNCTION "plpgsql_call_handler" () RETURNS opaque AS '${db.plpgsqllib}/plpgsql.so', 'plpgsql_call_handler' LANGUAGE 'C';
+      CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql' HANDLER "plpgsql_call_handler" LANCOMPILER 'PL/pgSQL';
+    </pgsql> 
+  </target>
+
+  <target name="drop-language" description="Drop plpgsql language">
+    <pgsql message="DROP PLPGSQL LANGUAGE">
+      DROP PROCEDURAL LANGUAGE 'plpgsql';
+    </pgsql> 
+  </target>
+
+
+  <target name="drop-tables-check" description="Drop tables">
+    <input
+       message="THIS WILL DELETE ALL TABLES AND DATA!! ARE YOU SURE? (y/N) "
+       validargs="n,N,y,Y"
+       addproperty="drop.tables.answer"
+       defaultvalue="n"
+       />
+
+    <condition property="drop.tables.go">
+      <equals arg1="${drop.tables.answer}" arg2="y" casesensitive="false"/>
+    </condition>
+    <condition property="drop.tables.nogo"><isfalse value="${drop.tables.go}"/></condition>
+  </target>
+
+  <import file="build-iwethey_user.xml"/>
+  <import file="build-user_property.xml"/>
+  <import file="build-quote.xml"/>
+  <import file="build-board.xml"/>
+  <import file="build-category.xml"/>
+  <import file="build-forum.xml"/>
+  <import file="build-read.xml"/>
+  <import file="build-post.xml"/>
+  <import file="build-board_summary.xml"/>
+
+</project>

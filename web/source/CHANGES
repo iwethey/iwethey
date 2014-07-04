@@ -1,0 +1,64 @@
+VERSION 0.2.2 (Starting 2010-Dec-30)
+
+* Bug fixes.
+* Better indexing.
+* Star Monkeys, for craft.
+
+VERSION 0.2.1 (Starting 2010-Dec-30)
+
+* Created the concept of an Administrative User.
+* Created ability for Administrative Users to edit LRPDisms.
+
+VERSION 0.2.0 (Starting 2008-Nov-24)
+
+* Fixed bug when clicking on "Logged In As" username displaying blank page.
+* "Post" button above posting options when previewing.
+
+VERSION 0.1.7 (Starting 2008-Nov-10)
+
+* LRPD gif showing new content in "negative" area of line... 
+* Taglib error WRT "Show All Threads" vs. "Show New Threads Only"
+* Markup in posts
+* HTML in sigs
+* Create new user bug fixed.
+* "Mark Forum Read" bar at bottom as well as top.
+* Upgraded to J2EE 2.4.
+* Opening a post midway through a thread shows no children.
+* Allow people to choose which board they will see the front page of when logging in.
+* Replace includes with real tag files
+* Link that shows all posts made by each user.
+
+VERSION 0.1.6 (2008-Nov-09)
+
+* Upgraded to Postgres 8.3.
+* Upgraded to Tomcat 6.0.
+* Combined multiple former iwethey projects (textfilter, forums, etc) into one project.
+* Upgraded to Hibernate 3.
+* Upgraded to Spring 2.
+
+VERSION 0.1.5
+
+* Lost to antiquity.
+
+VERSION 0.1.4
+
+* Lost to antiquity.
+
+VERSION 0.1.3
+
+* Lost to antiquity.
+
+VERSION 0.1.2
+
+* Added category and forum database functionality.
+* Uses Hibernate for most database access now.
+
+VERSION 0.1.1
+
+* Added board database functionality.
+* Bug fixes (preference booleans overwriting).
+* Modified build sequence.
+
+VERSION 0.1
+
+* Java rewrite using Spring Framework.

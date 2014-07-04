@@ -1,0 +1,85 @@
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: build-category.xml 25 2004-06-20 17:47:32Z anderson $ -->
+
+
+<project name="IWETHEY Forums SQL - category" default="tables" basedir=".">
+  <!-- CATEGORY -->
+
+  <target name="create-seq_category" description="Create category sequence">
+    <pgsql message="CREATE CATEGORY SEQUENCE" continue="continue">
+      CREATE SEQUENCE "seq_category" start 1 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+      GRANT ALL on "seq_category" to "postgres";
+      GRANT ALL on "seq_category" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="create-category" depends="create-seq_category" description="Create category table">
+    <pgsql message="CREATE CATEGORY TABLE">
+      CREATE TABLE "category" (
+      	"category_id" int NOT NULL DEFAULT nextval('seq_category') PRIMARY KEY,
+      	"category_board_id" int NOT NULL REFERENCES board (board_id) ON DELETE CASCADE ON UPDATE CASCADE,
+      	"category_order" int NOT NULL,
+      	"category_display_name" text NOT NULL,
+      	"category_created_by" int NOT NULL REFERENCES iwethey_user (user_id) ON UPDATE CASCADE,
+      	"category_created" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+      ) WITHOUT OIDS;
+      
+      CREATE INDEX idxcategory ON category USING btree (category_id);
+      
+      REVOKE ALL on "category" from PUBLIC;
+      GRANT ALL on "category" to "postgres";
+      GRANT ALL on "category" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="drop-category" description="Drop category table"  unless="drop.tables.nogo">
+    <pgsql message="DROP CATEGORY TABLE" continue="continue">
+      DROP TABLE "category" CASCADE;
+    </pgsql> 
+  </target>
+
+  <target name="load-category">
+    <pgsql message="LOAD CATEGORY DATA">
+      INSERT INTO category (category_id, category_board_id, category_order, category_display_name, category_created_by)
+       values(-1, -1, 1, 'General Sporks', -1);
+
+      INSERT INTO category (category_id, category_board_id, category_order, category_display_name, category_created_by)
+       values(-2, -1, 2, 'Specific Sporks', -1);
+
+      INSERT INTO category (category_id, category_board_id, category_order, category_display_name, category_created_by)
+       values(-3, -2, 2, 'Specific Blancmange', -2);
+
+      INSERT INTO category (category_id, category_board_id, category_order, category_display_name, category_created_by)
+       values(-4, -2, 1, 'General Blancmange', -2);
+    </pgsql> 
+  </target>
+
+  <target name="print-category">
+    <pgsql message="PRINT CATEGORY DATA"><![CDATA[
+      SELECT * FROM category where category_id < 0;
+    ]]></pgsql> 
+  </target>
+
+  <target name="clear-category" depends="database-existence-check" if="database.exists">
+    <pgsql message="CLEAR CATEGORY DATA"><![CDATA[
+      DELETE FROM category where category_id < 0 or category_board_id < 0;
+    ]]></pgsql> 
+  </target>
+
+
+</project>

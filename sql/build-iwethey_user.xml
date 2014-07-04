@@ -1,0 +1,87 @@
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: build-iwethey_user.xml 25 2004-06-20 17:47:32Z anderson $ -->
+
+<project name="IWETHEY Forums SQL - iwethey_user" default="tables" basedir=".">
+	<!-- IWETHEY_USER -->
+	<target name="create-seq_user" description="Create user sequence">
+		<pgsql message="CREATE USER SEQUENCE" continue="continue">
+			CREATE SEQUENCE "seq_user" start 1 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+			GRANT ALL on "seq_user" to "postgres";
+			GRANT ALL on "seq_user" to "${db.iwethey.user}";
+		</pgsql> 
+	</target>
+
+	<target name="create-iwethey_user" depends="create-seq_user" description="Create iwethey_user table">
+		<pgsql message="CREATE IWETHEY_USER TABLE">
+			CREATE TABLE "iwethey_user" (
+				"user_id" integer NOT NULL DEFAULT nextval('seq_user') PRIMARY KEY,
+				"nickname" text UNIQUE,
+				"password" text NOT NULL,
+				"admin" boolean NOT NULL default false,
+				"created" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+				"last_present" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+			) WITHOUT OIDS;
+
+			REVOKE ALL on "iwethey_user" from PUBLIC;
+			GRANT ALL on "iwethey_user" to "postgres";
+			GRANT ALL on "iwethey_user" to "${db.iwethey.user}";
+		</pgsql> 
+	</target>
+
+	<target name="drop-iwethey_user" description="Drop iwethey_user table" unless="drop.tables.nogo">
+		<pgsql message="DROP IWETHEY_USER TABLE" continue="continue">
+			DROP TABLE "iwethey_user" CASCADE;
+		</pgsql> 
+	</target>
+
+	<target name="load-iwethey_user">
+		<checksum file="${sql.home}/pw1.txt" property="pw1"/>
+		<checksum file="${sql.home}/pw2.txt" property="pw2"/>
+		<checksum file="${sql.home}/pw3.txt" property="pw3"/>
+		<checksum file="${sql.home}/pw4.txt" property="pw4"/>
+
+		<pgsql message="LOAD IWETHEY_USER DATA">
+			INSERT INTO iwethey_user (user_id, nickname, password) values(-1, 'ut_spork1', '${pw1}');
+			INSERT INTO iwethey_user (user_id, nickname, password) values(-2, 'ut_spork2', '${pw2}');
+			INSERT INTO iwethey_user (user_id, nickname, password, created, last_present) values(-3, 'ut_spork3', '${pw3}', CURRENT_TIMESTAMP - interval '10 hours', CURRENT_TIMESTAMP - interval '15 minutes');
+			INSERT INTO iwethey_user (user_id, nickname, password, admin) values(-4, 'ut_spork4', '${pw4}', true);
+		</pgsql> 
+	</target>
+
+	<target name="print-iwethey_user">
+		<pgsql message="PRINT IWETHEY_USER DATA">
+			SELECT * FROM iwethey_user where nickname like 'ut_%';
+		</pgsql> 
+	</target>
+
+	<target name="clear-iwethey_user" depends="database-existence-check" if="database.exists">
+		<pgsql message="CLEAR IWETHEY_USER DATA">
+			DELETE FROM iwethey_user where nickname like 'ut_%';
+		</pgsql> 
+	</target>
+
+	<target name="convert-iwethey_user-add-admin">
+		<pgsql message="Adding ADMIN column to iwethey_user.">
+			ALTER TABLE iwethey_user ADD admin boolean default false;
+			
+			UPDATE iwethey_user SET admin = false;
+			
+			ALTER TABLE iwethey_user ALTER COLUMN admin DROP NOT NULL;
+		</pgsql>
+	</target>
+</project>

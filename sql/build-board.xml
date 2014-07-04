@@ -1,0 +1,76 @@
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: build-board.xml 25 2004-06-20 17:47:32Z anderson $ -->
+
+
+<project name="IWETHEY Forums SQL - board" default="tables" basedir=".">
+  <!-- BOARD -->
+
+  <target name="create-seq_board" description="Create board sequence">
+    <pgsql message="CREATE BOARD SEQUENCE" continue="continue">
+      CREATE SEQUENCE "seq_board" start 1 increment 1 maxvalue 2147483647 minvalue 1  cache 1 ;
+      GRANT ALL on "seq_board" to "postgres";
+      GRANT ALL on "seq_board" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="create-board" depends="create-seq_board" description="Create board table">
+    <pgsql message="CREATE BOARD TABLE">
+      CREATE TABLE "board" (
+      	"board_id" int NOT NULL DEFAULT nextval('seq_board') PRIMARY KEY,
+      	"board_display_name" text NOT NULL,
+      	"board_desc" text NOT NULL,
+      	"board_image" text NULL,
+      	"board_created_by" integer NOT NULL REFERENCES iwethey_user (user_id) ON UPDATE CASCADE,
+      	"board_created" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+      ) WITHOUT OIDS;
+      
+      CREATE INDEX idxboard ON board USING btree (board_id);
+      
+      REVOKE ALL on "board" from PUBLIC;
+      GRANT ALL on "board" to "postgres";
+      GRANT ALL on "board" to "${db.iwethey.user}";
+    </pgsql> 
+  </target>
+
+  <target name="drop-board" description="Drop board table"  unless="drop.tables.nogo">
+    <pgsql message="DROP BOARD TABLE" continue="continue">
+      DROP TABLE "board" CASCADE;
+    </pgsql> 
+  </target>
+
+  <target name="load-board">
+    <pgsql message="LOAD BOARD DATA">
+      INSERT INTO board (board_id, board_display_name, board_desc, board_image, board_created_by) values(-1, 'Spork', 'Board de la Spork', 'spork.png', -1);
+      INSERT INTO board (board_id, board_display_name, board_desc, board_created_by) values(-2, 'Blancmange', 'Board de la Blancmange', -2);
+    </pgsql> 
+  </target>
+
+  <target name="print-board">
+    <pgsql message="PRINT BOARD DATA"><![CDATA[
+      SELECT * FROM board where board_id < 0;
+    ]]></pgsql> 
+  </target>
+
+  <target name="clear-board" depends="database-existence-check" if="database.exists">
+    <pgsql message="CLEAR BOARD DATA"><![CDATA[
+      DELETE FROM board where board_id < 0 or board_created_by < 0;
+    ]]></pgsql> 
+  </target>
+
+
+</project>

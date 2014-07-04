@@ -1,0 +1,93 @@
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="IWETHEY Forums SQL - quote" default="tables" basedir=".">
+	<target name="create-seq_quote" description="Create quote sequence">
+		<pgsql message="CREATE QUOTE SEQUENCE" continue="continue">
+			CREATE SEQUENCE "seq_quote" start 1 increment 1 maxvalue 2147483647 minvalue 1  cache 1;
+			GRANT ALL on "seq_quote" to "postgres";
+			GRANT ALL on "seq_quote" to "${db.iwethey.user}";
+		</pgsql> 
+	</target>
+
+	<target name="create-quote" depends="create-seq_quote" description="Create quote table">
+		<pgsql message="CREATE QUOTE TABLE">
+			CREATE TABLE "quote" (
+				"id" int NOT NULL DEFAULT nextval('seq_post') PRIMARY KEY,
+				"board_id" int NOT NULL REFERENCES board(board_id),
+				"quote" text NOT NULL,
+				"approved" boolean DEFAULT false NOT NULL,
+				"approved_date" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+				"approved_by" int NOT NULL REFERENCES iwethey_user (user_id),
+				"created_by" int NOT NULL REFERENCES iwethey_user (user_id),
+				"created" timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+			) WITHOUT OIDS;
+
+			CREATE INDEX idxquote ON quote USING btree (board_id);
+
+			REVOKE ALL on "quote" from PUBLIC;
+			GRANT ALL on "quote" to "postgres";
+			GRANT ALL on "quote" to "${db.iwethey.user}";
+		</pgsql>
+	</target>
+
+	<target name="drop-quote" description="Drop quote table"  unless="drop.tables.nogo">
+		<pgsql message="DROP QUOTE TABLE" continue="continue">
+			DROP TABLE "quote" CASCADE;
+		</pgsql>
+	</target>
+
+	<target name="load-quote">
+		<pgsql message="LOAD QUOTE DATA">
+			INSERT INTO quote (id, board_id, quote, created_by) values(-1, -1, 'Feared.', -1);
+			INSERT INTO quote (id, board_id, quote, created_by) values(-2, -1, 'Your Spork God[tm] is HERE!', -2);
+		</pgsql>
+	</target>
+
+	<target name="print-quote">
+		<pgsql message="PRINT QUOTE DATA">
+			SELECT * FROM quote where id &lt; 0;
+		</pgsql>
+	</target>
+
+	<target name="clear-quote" depends="database-existence-check" if="database.exists">
+		<pgsql message="CLEAR QUOTE DATA">
+			DELETE FROM quote where id &lt; 0;
+		</pgsql>
+	</target>
+
+	<target name="convert-quote-to-old-quote" depends="database-existence-check" if="database.exists">
+		<pgsql message="Converting quote table from old format to new.">
+			ALTER TABLE quote RENAME TO old_quote;
+		</pgsql>
+	</target>
+
+	<target name="alter-quote-add-approved" depends="database-existence-check" if="database.exists">
+		<pgsql message="Adding approval columns to Quote table.">
+			ALTER TABLE quote ADD COLUMN approved boolean default false;
+			UPDATE quote SET approved = true;
+			ALTER TABLE quote ALTER COLUMN approved DROP NOT NULL;
+
+			ALTER TABLE quote ADD COLUMN approved_by int REFERENCES iwethey_user(user_id);
+			UPDATE quote SET approved_by = 1;
+			ALTER TABLE quote ALTER COLUMN approved_by DROP NOT NULL;
+
+			ALTER TABLE quote ADD COLUMN approved_date timestamp(3) with time zone DEFAULT CURRENT_TIMESTAMP;
+			UPDATE quote SET approved_date = CURRENT_TIMESTAMP;
+			ALTER TABLE quote ALTER COLUMN approved_by DROP NOT NULL;
+		</pgsql>
+	</target>
+</project>

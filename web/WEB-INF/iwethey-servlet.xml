@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+   Copyright 2004-2010 Scott Anderson and Mike Vitale
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	  http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<beans>
+	<!-- data managers -->
+	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location"><value>classpath:runtime.properties</value></property>
+	</bean>
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+	  <property name="driverClassName"><value>${db.driver}</value></property>
+	  <property name="url"><value>jdbc:postgresql://${db.host}:${db.port}/${db.name}</value></property>
+	  <property name="username"><value>${db.iwethey.user}</value></property>
+	  <property name="password"><value>${db.iwethey.password}</value></property>
+	</bean>
+
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean" autowire="byName">
+		<property name="mappingResources">
+			<value>org/iwethey/forums/db/iwethey.hbm.xml</value>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</prop>
+				<prop key="hibernate.jdbc.batch_size">0</prop>
+				<prop key="hibernate.cache.use_query_cache">false</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.generate_statistics">true</prop>
+				<prop key="hibernate.session_factory_name">SessionFactory</prop>
+			</props>
+		</property>
+	</bean>
+
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager" autowire="byName"/>
+
+	<bean id="adminManager" class="org.iwethey.forums.db.JdbcAdminManager" autowire="byName" />
+	<bean id="userManagerLocal" class="org.iwethey.forums.db.HibUserManager" autowire="byName" />
+	<bean id="boardManager" class="org.iwethey.forums.db.HibBoardManager" autowire="byName" />
+	<bean id="categoryManager" class="org.iwethey.forums.db.HibCategoryManager" autowire="byName" />
+	<bean id="forumManager" class="org.iwethey.forums.db.HibForumManager" autowire="byName" />
+	<bean id="postManagerLocal" class="org.iwethey.forums.db.HibPostManager" autowire="byName" />
+
+	<bean id="transactionConfig" abstract="true">
+		<property name="transactionAttributes">
+			<props>
+				<prop key="get*">PROPAGATION_REQUIRED</prop>
+				<prop key="find*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="check*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="login">PROPAGATION_REQUIRED</prop> <!-- can't be readonly because it backfills old-style passwords -->
+				<prop key="save*">PROPAGATION_REQUIRED</prop>
+				<prop key="create*">PROPAGATION_REQUIRED</prop>
+				<prop key="remove*">PROPAGATION_REQUIRED</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="userManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		parent="transactionConfig" autowire="byName">
+		<property name="target"><ref local="userManagerLocal"/></property>
+	</bean>
+
+	<bean id="postManager" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean"
+		parent="transactionConfig" autowire="byName">
+		<property name="target"><ref local="postManagerLocal"/></property>
+	</bean>
+
+
+
+	<!-- mappings -->
+	<bean id="headerInterceptor" class="org.iwethey.forums.web.HeaderInterceptor" autowire="byName" />
+	<bean id="loginInterceptor" class="org.iwethey.forums.web.user.LoginInterceptor"/>
+	<bean id="adminInterceptor" class="org.iwethey.forums.web.admin.AdminInterceptor" autowire="byName" />
+	<bean id="sessionInterceptor" class="org.springframework.orm.hibernate3.support.OpenSessionInViewInterceptor" autowire="byName" />
+
+	<bean id="defaultHandlerMapping" class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping" >
+		<property name="interceptors"><list>
+			<ref bean="sessionInterceptor"/>
+			<ref bean="headerInterceptor"/>
+		</list></property>
+	</bean>
+
+	<bean id="urlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors"><list>
+			<ref bean="sessionInterceptor"/>
+			<ref bean="headerInterceptor"/>
+		</list></property>
+		<property name="mappings">
+			<props>
+				<prop key="/user/show.iwt">userController</prop>
+				<prop key="/user/statistics.iwt">userController</prop>
+				<prop key="/user/active.iwt">userController</prop>
+				<prop key="/user/toggle.iwt">userController</prop>
+				<prop key="/post/expandHistory.iwt">postController</prop>
+				<prop key="/post/expandAllHistory.iwt">postController</prop>
+				<prop key="/post/collapseAllHistory.iwt">postController</prop>
+				<prop key="/board/show.iwt">boardController</prop>
+				<prop key="/board/markRead.iwt">boardController</prop>
+				<prop key="/forum/show.iwt">forumController</prop>
+				<prop key="/forum/markRead.iwt">forumController</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="secureUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors"><list>
+			<ref bean="sessionInterceptor"/>
+			<ref bean="loginInterceptor"/>
+			<ref bean="headerInterceptor"/>
+		</list></property>
+		<property name="mappings">
+			<props>
+				<prop key="/post/new.iwt">NewPostForm</prop>
+				<prop key="/post/reply.iwt">ReplyPostForm</prop>
+				<prop key="/post/edit.iwt">EditPostForm</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="adminUrlMapping" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<ref bean="sessionInterceptor"/>
+				<ref bean="loginInterceptor"/>
+				<ref bean="headerInterceptor"/>
+				<ref bean="adminInterceptor"/>
+			</list>
+		</property>
+		<property name="mappings">
+			<props>
+				<prop key="/admin/main.iwt">AdminForm</prop>
+				<prop key="/admin/lrpd/allLrpds.json">AdminForm</prop>
+				<prop key="/admin/lrpd/saveLrpd.json">AdminForm</prop>
+				<prop key="/admin/lrpd/show.iwt">QuoteForm</prop>
+				<prop key="/admin/lrpd/edit.iwt">QuoteForm</prop>
+				<prop key="/admin/lrpd/save.iwt">QuoteForm</prop>
+<!--				<prop key="/admin/hibernateStats.iwt">adminController</prop> -->
+			</props>
+		</property>
+	</bean>
+
+	<bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass"><value>org.springframework.web.servlet.view.JstlView</value></property>
+		<property name="prefix"><value>/WEB-INF/jsp/</value></property>
+		<property name="suffix"><value>.jsp</value></property>
+	</bean>
+
+
+
+	<!-- controllers -->
+	<bean name="/main.iwt" id="GreetingController" class="org.iwethey.forums.web.MainController" autowire="byName" />
+	<bean name="/user/logout.iwt" id="LogoutController" class="org.iwethey.forums.web.user.LogoutController" />
+
+	<bean id="userController" class="org.iwethey.forums.web.user.UserController" autowire="byName"/>
+	<bean id="boardController" class="org.iwethey.forums.web.board.BoardController" autowire="byName"/>
+	<bean id="forumController" class="org.iwethey.forums.web.forum.ForumController" autowire="byName"/>
+	<bean id="postController" class="org.iwethey.forums.web.post.PostController" autowire="byName"/>
+
+	<bean name="/post/show.iwt" id="ShowPostController" class="org.iwethey.forums.web.post.ShowPostController" autowire="byName" />
+
+
+
+	<!-- forms -->
+	<bean id="userConfig" abstract="true">
+		<property name="sessionForm"><value>false</value></property>
+		<property name="commandName"><value>userInfo</value></property>
+		<property name="commandClass"><value>org.iwethey.forums.domain.User</value></property>
+	</bean>
+
+	<bean name="/user/login.iwt" id="LoginForm" class="org.iwethey.forums.web.user.LoginController"
+		parent="userConfig" autowire="byName" >
+		<property name="validator">
+			<bean class="org.iwethey.forums.web.user.LoginValidator" autowire="byName" />
+		</property>
+		<property name="formView"><value>/user/login</value></property>
+		<property name="successView"><value>../main.iwt</value></property>
+	</bean>
+
+	<bean name="/user/new.iwt" id="NewUserForm" class="org.iwethey.forums.web.user.NewUserController"
+		parent="userConfig" autowire="byName" >
+		<property name="validator">
+			<bean class="org.iwethey.forums.web.user.NewUserValidator" autowire="byName" />
+		</property>
+		<property name="formView"><value>/user/new</value></property>
+		<property name="successView"><value>../main.iwt</value></property>
+	</bean>
+
+	<bean name="/user/edit.iwt" id="EditUserForm" class="org.iwethey.forums.web.user.EditUserController"
+		parent="userConfig" autowire="byName" >
+		<property name="validator">
+			<bean class="org.iwethey.forums.web.user.EditUserValidator" autowire="byName" >
+				<property name="allowedIndentationFormats"><list>
+					<value>nbsp</value>
+					<value>bullet</value>
+					<value>number</value>
+					<value>none</value>
+				</list></property>
+				<property name="allowedHierarchyPositions"><list>
+					<value>before</value>
+					<value>after</value>
+					<value>none</value>
+				</list></property>
+				<property name="allowedLinkFormats"><list>
+					<value>samewindow</value>
+					<value>newwindow</value>
+					<value>asterisk</value>
+					<value>split</value>
+				</list></property>
+				<property name="allowedImageFormats"><list>
+					<value>inline</value>
+					<value>link</value>
+				</list></property>
+				<property name="allowedForumControlLocations"><list>
+					<value>top</value>
+					<value>bottom</value>
+					<value>both</value>
+				</list></property>
+
+				<property name="minForumBatchSize"><value>1</value></property>
+				<property name="maxForumBatchSize"><value>100</value></property>
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="postConfig" abstract="true">
+		<property name="sessionForm"><value>false</value></property>
+		<property name="commandName"><value>postInfo</value></property>
+		<property name="commandClass"><value>org.iwethey.forums.domain.Post</value></property>
+		<property name="validator">
+			<bean class="org.iwethey.forums.web.post.PostValidator" autowire="byName" />
+		</property>
+	</bean>
+
+	<bean id="NewPostForm" class="org.iwethey.forums.web.post.NewPostController" parent="postConfig" autowire="byName" />
+	<bean id="ReplyPostForm" class="org.iwethey.forums.web.post.ReplyPostController" parent="postConfig" autowire="byName" />
+	<bean id="EditPostForm" class="org.iwethey.forums.web.post.EditPostController" parent="postConfig" autowire="byName" />
+	<bean id="AdminForm" class="org.iwethey.forums.web.admin.AdminController" autowire="byName" />
+	<bean id="QuoteForm" class="org.iwethey.forums.web.admin.QuoteController" autowire="byName" />
+
+	<!-- messages -->
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename"><value>messages</value></property>
+	</bean>
+</beans>

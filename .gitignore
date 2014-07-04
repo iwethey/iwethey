@@ -1,0 +1,6 @@
+.idea/
+*.iml
+pmd/
+findbugs/
+nbproject/
+out/

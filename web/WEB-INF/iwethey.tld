@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<!--
+   Copyright 2004 Scott Anderson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	  http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<!-- $Id: iwethey.tld 55 2004-12-07 21:53:42Z anderson $ -->
+
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+        version="2.0">
+
+
+	<tlib-version>1.0</tlib-version>
+
+	<short-name>iwt</short-name>
+
+	<uri>http://www.iwethey.org/tags</uri>
+
+	<description>IWETHEY JSP tag library</description>
+
+	<tag>
+
+		<name>thread</name>
+		<tag-class>org.iwethey.forums.web.post.ThreadTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Iterates a thread post and its children (if necessary), providing
+			a 'post' object for each post, and a Boolean 'postIsNew' flag.
+			Requires the thread to be in a variable named 'thread', the current
+			forum as 'forum', and the current user as 'user'.
+		</description>
+
+		<variable>
+			<name-given>post</name-given>
+			<variable-class>org.iwethey.forums.domain.Post</variable-class>
+		</variable>
+
+		<variable>
+			<name-given>postIsNew</name-given>
+			<variable-class>java.lang.Boolean</variable-class>
+		</variable>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>content</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+	</tag>
+
+	<tag>
+		<name>newPost</name>
+		<tag-class>org.iwethey.forums.web.post.NewPostURLTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Creates the URL for a new post link.
+		</description>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>replyPost</name>
+		<tag-class>org.iwethey.forums.web.post.ReplyPostURLTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Creates the URL for a reply post link.
+		</description>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>editPost</name>
+		<tag-class>org.iwethey.forums.web.post.EditPostURLTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Creates the URL for a edit post link.
+		</description>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>postHistory</name>
+		<tag-class>org.iwethey.forums.web.post.EditHistoryTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Iterates the post history. Sets "expanded" to the expanded state of the entry.
+		</description>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>markRead</name>
+		<tag-class>org.iwethey.forums.web.forum.MarkReadURLTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Creates the URL for a mark read link.
+		</description>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>forumNew</name>
+		<tag-class>org.iwethey.forums.web.forum.ForumNewTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Checks if a forum should be shown in board view or not.
+		</description>
+
+		<variable>
+			<name-given>forumIsNew</name-given>
+			<variable-class>java.lang.Boolean</variable-class>
+		</variable>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
+	<tag>
+		<name>forEach</name>
+		<tag-class>org.iwethey.forums.web.ForEachTag</tag-class>
+		<body-content>JSP</body-content>
+
+		<description>
+			Bug fix override of c:forEach
+		</description>
+
+		<attribute>
+			<name>items</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>begin</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>end</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>step</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>var</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+
+		<attribute>
+			<name>varStatus</name>
+			<required>false</required>
+			<rtexprvalue>false</rtexprvalue>
+		</attribute>
+	</tag>
+
+</taglib>

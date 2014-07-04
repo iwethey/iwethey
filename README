@@ -1,0 +1,128 @@
+$Id: README 28 2004-12-02 16:51:08Z anderson $
+
+The build file requires Ant 1.6.
+
+DEPENDENCIES:
+
+See the PREREQUISITES document for necessary applications.
+
+If you are using the full version of the distribution, the needed
+libs will be in lib/war/, lib/test/, and lib/ant/. Otherwise, you 
+will need:
+
+	For building (in lib/ant/):
+		catalina-ant.jar
+
+	For running (in lib/war/):
+		asm-1.4.1.jar
+		asm-attrs-1.4.1.jar
+		asm-util-1.4.1.jar
+		commons-collections.jar
+		commons-dbcp.jar
+		commons-lang.jar
+		commons-logging.jar
+		commons-pool.jar
+		connector.jar
+		ehcache.jar
+		jaas.jar
+		jcs.jar
+		jdbc2_0-stdext.jar
+		jstl.jar
+		jta.jar
+		log4j-1.2.8.jar
+		odmg.jar
+		postgresql-jdbc3-7.4.2.jar
+		spring.jar
+		standard.jar
+		swarmcache.jar
+
+	For testing (in lib/test/):
+		Tidy.jar
+		commons-logging.jar
+		httpunit.jar
+		js.jar
+		junit-3.8.1.jar
+		log4j-1.2.8.jar
+		nekohtml.jar
+		xercesImpl.jar
+		xmlParserAPIs.jar
+		
+
+BUILDING:
+
+1) Set up your PostgreSQL and Tomcat users and permissions.
+
+You will need to add the following line to your catalina.policy file in the
+appropriate place:
+
+	// Required for PostgreSQL access (substitute your host:port)
+	permission java.net.SocketPermission "localhost:5432", "connect,resolve";
+	
+	// Required by Hibernate
+	permission java.util.PropertyPermission "*", "read,write";
+	permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+	permission java.lang.RuntimePermission "accessDeclaredMembers";
+
+	// You might (probably?) need this:
+	permission java.security.AllPermission;
+
+If you don't set the security policy properly, you will receive the following
+error when attempting to access the application:
+	java.lang.NoClassDefFoundError
+	   at net.sf.hibernate.cfg.Configuration.<init>(Configuration.java:86)
+
+Make sure the host and port matches those in the build.properties file.
+
+You must be able to access http://your.tomcat.host:yourTomcatPort/manager/list
+from a web browser before the build script will be able to do anything with the
+web application.
+
+If you are using IDENT for PostgreSQL, make sure that both the user you
+are installing under *and* the Tomcat runtime user are included.
+
+
+2) To use the Ant build tasks, you must have the catalina-ant.jar in your
+Ant classpath. A copy may be found in the lib/ant directory in the full
+source distribution. To use it, either copy it to ~/.ant/lib/, or add
+"-lib lib/ant" to your ant commands.
+
+Edit the build.properties file to reflect your environment, then run:
+
+	ant all (or "ant -lib lib/ant all")
+
+This will compile the code and create the database.
+
+
+3) To run the tests, you must also have the junit jar in your Ant classpath. A 
+copy may be found in the lib/test directory in the full source distribution.
+To use it, either copy it to ~/.ant/lib/, or add "-lib lib/test" to your ant
+commands.
+
+Next, run:
+
+	ant test (or "ant -lib lib/ant -lib lib/test test")
+
+This will install the web application in Tomcat, load test data
+in the database, and run the local and web test harnesses.
+
+NOTE: None of this will work unless the following is true:
+	1) the UNIX user has permission to connect as 'postgres' to the database
+	2) the database is accepting TCP/IP connections
+
+
+The application will be uninstalled every time you restart Tomcat. To install
+the application permanently:
+
+1) Run 'ant dist'.
+2) Copy dist/iwethey-tomcat-install.xml and dist/iwethey.VERSION.war to your
+   Tomcat webapps directory (/var/lib/tomcat4/webapps on Debian).
+3) Restart Tomcat.
+
+
+NOTE: Using the drop-database functionality will require an installed and
+      working Tomcat. The build script attempts to remove the web application
+      to make sure that the database isn't being accessed. If you don't want
+      this functionality, remove the section in the "drop-database" target
+      in sql/build.xml that begins with "REMOVING WEB APPLICATION".
+
+

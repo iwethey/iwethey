@@ -1,0 +1,108 @@
+##   Copyright 2004 Scott Anderson
+##
+##   Licensed under the Apache License, Version 2.0 (the "License");
+##   you may not use this file except in compliance with the License.
+##   You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+##   Unless required by applicable law or agreed to in writing, software
+##   distributed under the License is distributed on an "AS IS" BASIS,
+##   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+##   See the License for the specific language governing permissions and
+##   limitations under the License.
+
+## $Id: header.vm 4 2004-04-20 19:58:10Z anderson $
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <title>#if($title) ${title} #else $ctx.msg("title") #end</title>
+
+  <LINK REL="icon" HREF="http://z.iwethey.org/forums/images/lrpd.gif" TYPE="image/gif">
+  <link rel="SHORTCUT ICON" href="/favicon.ico">
+
+  <meta name="MSSmartTagsPreventParsing" content="TRUE">
+
+  <link rel="stylesheet" href="$ctx.url("/style.css")" type="text/css">
+
+</head>
+
+<body>
+
+<div class="siteCommands">
+  <div class="siteCommandBox">
+    <a href="http://twiki.iwethey.org/twiki/bin/view/Main/">twikIWETHEY</a>
+    | <a href="http://www.vtluug.org/mailman/listinfo/iwe">Mailing List</a>
+    | <a href="telnet://iwethey.org:3000">IWETHEY Interactive</a>
+  </div>
+
+  <div class="siteCommandBox middle">
+    <a href="$ctx.url("/source/CHANGES")">$ctx.msg("version.label") $ctx.msg("version.no")</a>
+    (<a href="source">Source</a>) - $ctx.msg("report.bugs", $ctx.url("/forum.iwt?forumid=3"))
+  </div>
+
+  <div class="siteCommandBox middle">
+    $userCount $ctx.msg("registered") | 
+     #if($activeSingle)
+      $ctx.msg("lph", [$activeUserCount, $ctx.url("/user/active.iwt"), $lph])
+     #else
+      $ctx.msg("lphs", [$activeUserCount, $ctx.url("/user/active.iwt"), $lph])
+     #end |
+    <a href="$ctx.url("/user/statistics.iwt")">$ctx.msg("statistics")</a>
+  </div>
+
+  <div class="siteCommandBox">
+    <a class="nochange" href="$ctx.url("/board/search.iwt?boardid=1")">$ctx.msg("search")</a> |
+    <a class="nochange" href="$ctx.url("/content/random.iwt")">$ctx.msg("random")</a> |
+    <a href="/zlogs">$ctx.msg("usage")</a>
+    <br />
+    #if($username)
+      $ctx.msg("logged.in") 
+      <a class="nochange username" href="$ctx.url("/user/show.iwt")">
+        $username
+      </a> |
+      <a class="nochange" href="$ctx.url("/user/edit.iwt")">
+        $ctx.msg("edit.preferences")
+      </a> |
+      <a class="nochange" href="$ctx.url("/user/logout.iwt")">
+        $ctx.msg("logout")
+      </a>
+    #else
+      <a href="$ctx.url("/user/login.iwt")">$ctx.msg("login")</a> |
+      <a href="$ctx.url("/user/new.iwt")">$ctx.msg("create.user")</a>
+    #end
+  </div>
+
+</div>
+
+<div class="siteWelcome">
+  <img src="$ctx.url("/images/iwethey-lrpd-small.png")" alt="$ctx.msg("alt.banner")">
+  <h2>$ctx.msg("welcome")</h2>
+</div>
+
+#if($notice)<div class="blockbox notice"><h1>$ctx.msg("notice"):</h1>$notice</div>#end
+
+<div class="blockbox navbar">
+#foreach( $n in $navigation )
+  #if( !$ctx.last($navigation, $velocityCount) )<a href="$ctx.url("${n.uri}")">#end<span class="barlink">#if($n.args)$ctx.msg($n.label, $n.args)#else$ctx.msg($n.label)#end</span>#if( !$ctx.last($navigation, $velocityCount) )</a><span class="divider"> / </span>#end
+#end
+</div>
+
+#if( $commands )
+  <div class="blockbox commandbar">
+    #foreach( $n in $commands )
+      #if( !$n.current )<a class="nochange" href="$ctx.url("$n.uri")">#end<span class="barlink">#if($n.args)$ctx.msg($n.label, $n.args)#else$ctx.msg($n.label)#end</span>#if( !$n.current )</a>#end
+      #if( $ctx.last($commands, $velocityCount) )<span class="divider"> | </span>#end
+    #end
+  </div>
+#end
+
+#if($message)
+<div id="message"><h3>$ctx.msg($message)</h3></div>
+#end
+<div id="window">
+

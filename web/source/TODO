@@ -1,0 +1,33 @@
+* Pager bar is somewhat retarded.
+* Autorefresh
+* Unread Post Counts
+* User stylesheets
+* Message quoting
+* Thread indent adjust by user pref
+* Remain logged-in forever
+* Mark-Read by Thread, not Forum
+* A PM system is always handy
+* Method to stop duplicate posts.
+* LRPD messages tied to a specific Board.
+* Use Ext/Ajax call to get an Edited post's history instead of page refresh.
+* "Most ever active users" timestamp?
+* Sticky tag for "announcement" style posts, able to be set by Admins.
+* Paginate previous posts when user's name is clicked on.
+
+Completed:
+
+* admin users (more to fix up broken links'n'shit in peoples' posts, than to police, but spammers need squishing from time to time)
+* The LRPD gif showing new content in "negative" area of line... 
+* Taglib error WRT "Show All Threads" vs. "Show New Threads Only"
+* Markup in posts
+* HTML in sigs
+* User Pref to "Show you in Active Users List" setting doesn't work.
+* "Mark Forum Read" bar at bottom as well as top
+* Opening a post midway through a thread shows no children.
+* Disabling the 'Mark All Forums Read' in the Preferences seems to disable the 'Mark Read' for individual forums as well.
+* Allow people to choose which board they will see the front page of when logging in.
+* Link that shows all posts made by each user.
+* "Logged In As...." bug
+* Respect my browser font choice
+* Fixed bug when clicking on "Logged In As" username displaying blank page.
+* "Post" button above posting options when previewing.
